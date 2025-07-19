@@ -1,16 +1,25 @@
-# attendance_tasks
+# Attendance & Daily Task Management App
 
-A new Flutter project.
+A **Flutter application** that allows users to **mark daily attendance** and **manage their daily tasks** efficiently.  
+The app is built with a **feature-first structure** using **MVVM architecture** and **Provider** for state management.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## Architecture
 
-A few resources to get you started if this is your first Flutter project:
+This project follows the **MVVM (Model-View-ViewModel)** pattern to ensure a clean separation of concerns:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Project Structure
+
+The app is organized into **feature-based folders**, making it scalable and maintainable.
+Each feature contains its own logic and follows the MVVM principle internally.
+
+### 📁 Example: `attendance/` Feature
+
+lib/
+attendance/
+models/ # Data models (e.g., AttendanceRecord)
+providers/ # ViewModels / State logic (e.g., AttendanceProvider)
+screens/ # UI components for attendance (e.g., AttendanceScreen)
