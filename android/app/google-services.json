@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "960227482973",
+    "project_id": "attendance-tasks",
+    "storage_bucket": "attendance-tasks.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:960227482973:android:2ce63b39036d4aef339cb4",
+        "android_client_info": {
+          "package_name": "com.example.attendance_tasks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZpY5TZBXIwdv8PbPiZyx8Ff8Z-k-oyOY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
