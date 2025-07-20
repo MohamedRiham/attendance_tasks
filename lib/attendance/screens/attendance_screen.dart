@@ -17,16 +17,32 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   final _formKey = GlobalKey<FormState>();
   TimeOfDay? checkInTime;
   TimeOfDay? checkOutTime;
-  TextEditingController userNameController = TextEditingController();
+  final TextEditingController _userNameController = TextEditingController();
   late AttendanceProvider attendanceProvider;
   bool _isLoading = false;
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await attendanceProvider.loadName();
-      attendanceProvider.loadAttendanceHistory();
+      try {
+        await attendanceProvider.loadName();
+        await attendanceProvider.loadAttendanceHistory();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('An error occurred while loading details'),
+            ),
+          );
+        }
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    _userNameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -35,278 +51,355 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return CustomScaffold(
       title: 'Attendance',
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: _isLoading
-              ? Center(child: CircularProgressIndicator())
-              : attendanceProvider.myName == null
-              ? Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      const Text(
-                        "Enter your name to begin:",
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(height: 10),
-                      CustomTextField(
-                        controller: userNameController,
-                        hintText: 'User Name',
-                        icon: Icons.person,
-                        keyboardType: TextInputType.name,
-                      ),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              setState(() {
-                                _isLoading = true;
-                              });
-                              await attendanceProvider.saveUserName(
-                                userNameController.text,
-                              );
-                              setState(() {
-                                _isLoading = false;
-                              });
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 40,
-                              vertical: 14,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _isLoading
+                ? CircularProgressIndicator()
+                : attendanceProvider.myName == null
+                ? Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        const Text(
+                          "Enter your name to begin:",
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        const SizedBox(height: 10),
+                        CustomTextField(
+                          controller: _userNameController,
+                          hintText: 'User Name',
+                          icon: Icons.person,
+                          keyboardType: TextInputType.name,
+                        ),
+                        const SizedBox(height: 10),
+
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              if (_formKey.currentState!.validate()) {
+                                try {
+                                  setState(() {
+                                    _isLoading = true;
+                                  });
+                                  await attendanceProvider.saveUserName(
+                                    _userNameController.text,
+                                  );
+                                } catch (e) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'An error occurred while saving details',
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                            child: const Text('Submit'),
                           ),
-                          child: const Text('Submit'),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          "Hello, ${attendanceProvider.myName}",
+                          style: TextStyle(fontSize: 20),
                         ),
                       ),
-                    ],
-                  ),
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Hello, ${attendanceProvider.myName}",
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (                            attendanceProvider
-                                    .todayAttendance
-                                    ?.attendanceStatus !=
-                                'On Leave') ...[
-                                  if (attendanceProvider.todayAttendance?.checkInTime == null) ...[
-                          ElevatedButton(
-                            onPressed: () async {
-                              try {
-                                setState(() {
-                                  _isLoading = true;
-                                });
-
-                                String message = await attendanceProvider
-                                    .checkIn();
-
-                                if (context.mounted) {
-                                  if (message == 'Already marked') {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Check-in has already been marked.',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'An error occurred while saving details',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                              setState(() {
-                                _isLoading = false;
-                              });
-                            },
-                            child: const Text("Check-In"),
-                          ),
-                          const SizedBox(width: 10),
-                          ],
-                          if (attendanceProvider.todayAttendance?.checkOutTime == null) ...[
-                          ElevatedButton(
-                            onPressed: () async {
-                              try {
-                                setState(() {
-                                  _isLoading = true;
-                                });
-
-                                String message = await attendanceProvider
-                                    .checkOut();
-
-                                if (context.mounted) {
-                                  if (message ==
-                                      'No check-in found for today.') {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'No check-in found for today.',
-                                        ),
-                                      ),
-                                    );
-                                  } else if (message ==
-                                      'Attendance for today has already been marked.') {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Attendance for today has already been marked.',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'An error occurred while saving details',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              }
-                              setState(() {
-                                _isLoading = false;
-                              });
-                            },
-                            child: const Text("Check-Out"),
-                          ),
-                            const SizedBox(width: 10),
-                          ],
-                          if (attendanceProvider.todayAttendance?.checkInTime ==
-                                  null &&
+                      const SizedBox(height: 16),
+                      if (attendanceProvider
+                                  .todayAttendance
+                                  ?.attendanceStatus !=
+                              'On Leave' &&
+                          (attendanceProvider.todayAttendance?.checkInTime ==
+                                  null ||
                               attendanceProvider
                                       .todayAttendance
                                       ?.checkOutTime ==
-                                  null) ...[
-                            Expanded(
-                              child: TextButton(
-                                onPressed: () async {
-                                  try {
-                                    setState(() {
-                                      _isLoading = true;
-                                    });
+                                  null)) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(
+                                  context,
+                                ).inputDecorationTheme.fillColor ??
+                                (Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.grey[800]
+                                    : Colors.grey[200]),
 
-                                    await attendanceProvider.markOnLeave();
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                            'An error occurred while saving details',
+                            border: Border.all(
+                              color:
+                                  Theme.of(context)
+                                      .inputDecorationTheme
+                                      .border
+                                      ?.borderSide
+                                      .color ??
+                                  (Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white24
+                                      : Colors.black12),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (attendanceProvider
+                                      .todayAttendance
+                                      ?.checkInTime ==
+                                  null) ...[
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    try {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+
+                                      String message = await attendanceProvider
+                                          .checkIn();
+
+                                      if (context.mounted) {
+                                        if (message == 'Already marked') {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Check-in has already been marked.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'An error occurred while saving details',
+                                            ),
                                           ),
-                                        ),
-                                      );
+                                        );
+                                      }
                                     }
-                                  }
-                                  setState(() {
-                                    _isLoading = false;
-                                  });
-                                },
-                                child: const Text("Mark On Leave"),
-                              ),
-                            ),
-                          ],
-                        ],
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  },
+                                  child: const Text("In"),
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+                              if (attendanceProvider
+                                      .todayAttendance
+                                      ?.checkOutTime ==
+                                  null) ...[
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    try {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+
+                                      String message = await attendanceProvider
+                                          .checkOut();
+
+                                      if (context.mounted) {
+                                        if (message ==
+                                            'No check-in found for today.') {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'No check-in found for today.',
+                                              ),
+                                            ),
+                                          );
+                                        } else if (message ==
+                                            'Attendance for today has already been marked.') {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Attendance for today has already been marked.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'An error occurred while saving details',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  },
+                                  child: const Text("Out"),
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+                              if (attendanceProvider
+                                          .todayAttendance
+                                          ?.checkInTime ==
+                                      null &&
+                                  attendanceProvider
+                                          .todayAttendance
+                                          ?.checkOutTime ==
+                                      null) ...[
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      try {
+                                        setState(() {
+                                          _isLoading = true;
+                                        });
+
+                                        await attendanceProvider.markOnLeave();
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'An error occurred while saving details',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
+                                      setState(() {
+                                        _isLoading = false;
+                                      });
+                                    },
+                                    child: const Text("Leave"),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ],
-                    ),
-                    const SizedBox(height: 20),
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Today's Record",
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 10),
-                            _infoRow(
-                              "Date",
-                              attendanceProvider.formattedCurrentDay ?? '__',
-                            ),
-                            _infoRow(
-                              "Day Name",
-                              attendanceProvider.todayAttendance?.dayName ?? '',
-                            ),
-                            _infoRow(
-                              "Check-In",
-                              attendanceProvider.todayAttendance?.checkInTime ??
-                                  '__',
-                            ),
-                            _infoRow(
-                              "Check-Out",
-                              attendanceProvider
-                                      .todayAttendance
-                                      ?.checkOutTime ??
-                                  '__',
-                            ),
-                            _infoRow(
-                              "Time Spent",
-                              attendanceProvider.todayAttendance?.timeSpent ??
-                                  '__',
-                            ),
-                            _infoRow(
-                              "Status",
-                              attendanceProvider
-                                      .todayAttendance
-                                      ?.attendanceStatus ??
-                                  '__',
-                            ),
-                          ],
+                      const SizedBox(height: 10),
+                      Text(
+                        "Today's Record",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      "Attendance History",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(height: 10),
+
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _infoRow(
+                                "Date",
+                                attendanceProvider.formattedCurrentDay ?? '__',
+                              ),
+                              _infoRow(
+                                "Day Name",
+                                attendanceProvider.todayAttendance?.dayName ??
+                                    '',
+                              ),
+                              _infoRow(
+                                "Check-In",
+                                attendanceProvider
+                                        .todayAttendance
+                                        ?.checkInTime ??
+                                    '__',
+                              ),
+                              _infoRow(
+                                "Check-Out",
+                                attendanceProvider
+                                        .todayAttendance
+                                        ?.checkOutTime ??
+                                    '__',
+                              ),
+                              _infoRow(
+                                "Time Spent",
+                                attendanceProvider.todayAttendance?.timeSpent ??
+                                    '__',
+                              ),
+                              _infoRow(
+                                "Status",
+                                attendanceProvider
+                                        .todayAttendance
+                                        ?.attendanceStatus ??
+                                    '__',
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Expanded(
-                      child: attendanceProvider.attendanceHistory.isEmpty
-                          ? const Text("No past records")
-                          : ListView.builder(
-                              itemCount:
-                                  attendanceProvider.attendanceHistory.length,
-                              itemBuilder: (context, index) {
-                                final record =
-                                    attendanceProvider.attendanceHistory[index];
-                                return AttendanceCard(attendance: record);
-                              },
-                            ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Attendance History",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Expanded(
+                        child: attendanceProvider.attendanceHistory.isEmpty
+                            ? const Center(child: Text("No past records"))
+                            : ListView.builder(
+                                itemCount:
+                                    attendanceProvider.attendanceHistory.length,
+                                itemBuilder: (context, index) {
+                                  final record = attendanceProvider
+                                      .attendanceHistory[index];
+                                  return AttendanceCard(attendance: record);
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
       bottomNavigation: attendanceProvider.myName != null
@@ -381,19 +474,13 @@ class AttendanceCard extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(
-              "$title:",
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Colors.grey,
-              ),
-            ),
+            child: Text("$title:", style: const TextStyle(fontSize: 16)),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
         ],

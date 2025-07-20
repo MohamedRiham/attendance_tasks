@@ -40,7 +40,7 @@ navigatorKey: navigatorKey,
       themeMode: themeProvider.currentTheme,
       debugShowCheckedModeBanner: false,
 
-      home: const AttendanceScreen(),
+      home:  const AttendanceScreen(),
     );
   }
 }

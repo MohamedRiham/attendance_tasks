@@ -18,24 +18,20 @@ class CustomScaffold extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: InkWell(
+          onLongPress: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('An error occurred while saving details'),
+              ),
+            );
+          },
+
+          child: Text(title),
+        ),
         centerTitle: true,
 
         actions: [
-          IconButton(
-            icon: const Icon(Icons.bug_report),
-            onLongPress: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('An error occurred while saving details'),
-                ),
-              );
-            },
-            onPressed: () {
-
-            },
-            tooltip: 'Simulate Error',
-          ),
           Semantics(
             label: themeProvider.isDarkMode ? 'Dark Mode On' : 'Dark Mode Off',
             button: true,

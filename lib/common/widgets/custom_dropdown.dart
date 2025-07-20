@@ -4,13 +4,11 @@ class CustomDropdown extends StatelessWidget {
   final String value;
   final Function(String?) onChanged;
   final List<String> items;
-  final String labelText;
   const CustomDropdown({
     super.key,
     required this.value,
     required this.onChanged,
     required this.items,
-    required this.labelText,
   });
 
   @override
@@ -21,7 +19,6 @@ class CustomDropdown extends StatelessWidget {
         isExpanded: true,
         value: value,
         onChanged: onChanged,
-        decoration: InputDecoration(labelText: labelText),
 
         items: items
             .map(

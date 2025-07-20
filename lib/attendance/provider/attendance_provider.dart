@@ -12,6 +12,7 @@ class AttendanceProvider with ChangeNotifier {
   List<Attendance> attendanceHistory = [];
   Attendance? todayAttendance;
   String? formattedCurrentDay;
+
   Future<void> initDatabase() async {
     try {
       database = await LocalStorage.getInstance();
@@ -49,22 +50,31 @@ class AttendanceProvider with ChangeNotifier {
       await initDatabase();
 
       attendanceHistory = database.values<Attendance>('attendance_box');
+
       if (attendanceHistory.isNotEmpty) {
         final today = DateTime.now();
         final todayDateOnly = DateTime(today.year, today.month, today.day);
-        todayAttendance = attendanceHistory.firstWhere((record) {
-          if (record.date == null) return false;
-          final recordDate = DateTime(
-            record.date!.year,
-            record.date!.month,
-            record.date!.day,
-          );
-          return recordDate == todayDateOnly;
-        });
-        _formatDateAndTime();
-        _getTimeSpent();
-        notifyListeners();
+
+        List<Attendance> list = attendanceHistory.where((element) {
+          if (element.date != null) {
+            final dateOnly = DateTime(
+              element.date!.year,
+              element.date!.month,
+              element.date!.day,
+            );
+
+            return todayDateOnly == dateOnly;
+          }
+          return false;
+        }).toList();
+        if (list.isNotEmpty) {
+          todayAttendance = list.first;
+
+          _formatDateAndTime();
+          _getTimeSpent();
+        }
       }
+      notifyListeners();
     } catch (e) {
       throw Exception('Failed to load attendance history');
     }
@@ -228,7 +238,6 @@ class AttendanceProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      print(e);
       throw Exception('Failed to mark attendance as leave.');
     }
   }
