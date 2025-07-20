@@ -52,20 +52,20 @@ class AttendanceProvider with ChangeNotifier {
       if (attendanceHistory.isNotEmpty) {
         final today = DateTime.now();
         final todayDateOnly = DateTime(today.year, today.month, today.day);
-        todayAttendance = attendanceHistory.firstWhere(
-                (record) {
-              if (record.date == null) return false;
-              final recordDate = DateTime(
-                  record.date!.year, record.date!.month, record.date!.day);
-              return recordDate == todayDateOnly;
-            }
-        );
+        todayAttendance = attendanceHistory.firstWhere((record) {
+          if (record.date == null) return false;
+          final recordDate = DateTime(
+            record.date!.year,
+            record.date!.month,
+            record.date!.day,
+          );
+          return recordDate == todayDateOnly;
+        });
         _formatDateAndTime();
         _getTimeSpent();
         notifyListeners();
       }
     } catch (e) {
-
       throw Exception('Failed to load attendance history');
     }
   }
@@ -102,7 +102,7 @@ class AttendanceProvider with ChangeNotifier {
           date: todayDate,
           checkInTime: formattedCheckInTime,
           dayName: formattedDayName,
-          attendanceStatus: 'Checked In Only'
+          attendanceStatus: 'Incomplete',
         );
 
         todayAttendance = newAttendance;
@@ -118,7 +118,6 @@ class AttendanceProvider with ChangeNotifier {
     return message;
   }
 
-
   Future<String> checkOut() async {
     String message = '';
     try {
@@ -127,22 +126,32 @@ class AttendanceProvider with ChangeNotifier {
       if (todayAttendance == null) {
         message = 'No check-in found for today.';
         return message;
-      }
+      } else if (todayAttendance?.checkInTime != null &&
+          todayAttendance?.checkOutTime != null) {
+        message = 'Attendance for today has already been marked.';
+        return message;
+      } else {
         String formattedCheckOutTime = DateFormat('HH:mm').format(todayDate);
 
         todayAttendance!.checkOutTime = formattedCheckOutTime;
-todayAttendance!.attendanceStatus = 'Present';
-      final records = database.values<Attendance>('attendance_box');
-      final index = records.indexWhere((record) => record.id == todayAttendance!.id);
-      if (index != -1) {
-        await database.update(
-            boxName: 'attendance_box', value: todayAttendance!);
-        final localIndex = attendanceHistory.indexWhere((att) =>
-        att.id == todayAttendance!.id);
-        attendanceHistory[localIndex] = todayAttendance!;
+        todayAttendance!.attendanceStatus = 'Present';
+        final records = database.values<Attendance>('attendance_box');
+        final index = records.indexWhere(
+          (record) => record.id == todayAttendance!.id,
+        );
+        if (index != -1) {
+          await database.update(
+            boxName: 'attendance_box',
+            value: todayAttendance!,
+          );
+          final localIndex = attendanceHistory.indexWhere(
+            (att) => att.id == todayAttendance!.id,
+          );
+          attendanceHistory[localIndex] = todayAttendance!;
 
-_getTimeSpent();
-        notifyListeners();
+          _getTimeSpent();
+          notifyListeners();
+        }
       }
     } catch (e) {
       throw Exception('An error occurred');
@@ -153,16 +162,16 @@ _getTimeSpent();
 
   void _formatDateAndTime() {
     if (todayAttendance?.date != null) {
-      formattedCurrentDay =
-          DateFormat('MM/dd/yyyy').format(todayAttendance!.date!);
+      formattedCurrentDay = DateFormat(
+        'MM/dd/yyyy',
+      ).format(todayAttendance!.date!);
       notifyListeners();
     }
-
   }
 
-
   void _getTimeSpent() async {
-    if (todayAttendance?.checkInTime == null || todayAttendance?.checkOutTime == null) {
+    if (todayAttendance?.checkInTime == null ||
+        todayAttendance?.checkOutTime == null) {
       return;
     }
 
@@ -193,12 +202,34 @@ _getTimeSpent();
       final diff = checkOut.difference(checkIn);
       final hours = diff.inHours.toString().padLeft(2, '0');
       final minutes = (diff.inMinutes % 60).toString().padLeft(2, '0');
-todayAttendance?.timeSpent = hours+minutes;
-      await database.update(
-          boxName: 'attendance_box', value: todayAttendance!);
-
+      todayAttendance?.timeSpent = '$hours Hours and $minutes Minutes';
+      await database.update(boxName: 'attendance_box', value: todayAttendance!);
     } catch (e) {
       return;
+    }
+  }
+
+  Future<void> markOnLeave() async {
+    try {
+      DateTime todayDate = DateTime.now();
+      todayAttendance ??= Attendance(
+        id: Uuid().v4(),
+        date: todayDate,
+        dayName: DateFormat('EEEE').format(todayDate),
+        checkInTime: null,
+        checkOutTime: null,
+        timeSpent: null,
+        attendanceStatus: 'On Leave',
+      );
+      _formatDateAndTime();
+
+      await database.add(boxName: 'attendance_box', value: todayAttendance!);
+      attendanceHistory.add(todayAttendance!);
+
+      notifyListeners();
+    } catch (e) {
+      print(e);
+      throw Exception('Failed to mark attendance as leave.');
     }
   }
 }

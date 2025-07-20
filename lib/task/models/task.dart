@@ -5,18 +5,18 @@ part 'task.g.dart';
 @HiveType(typeId: 2, adapterName: 'TaskAdapter')
 class Task extends HiveObject {
   @HiveField(0)
-  final String id;
+ String id;
   @HiveField(1)
-  final String name;
+ String name;
 
   @HiveField(2)
-  final DateTime dueDate;
+ DateTime dueDate;
 
   @HiveField(3)
-  final String priority;
+ String priority;
 
   @HiveField(4)
-  final String status;
+ String status;
 
   Task({
     required this.id,

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shop_app/main.dart';
+import 'package:attendance_tasks/main.dart';
 
-Future<void> selectTime(Function(TimeOfDay) setPickedDate) async {
-  final TimeOfDay? picked = await showTimePicker(
-    barrierDismissible: false,
+Future<void> selectDate(Function(DateTime) setPickedDate) async {
+  final now = DateTime.now();
+  final picked = await showDatePicker(
     context: navigatorKey.currentContext!,
-    initialTime: TimeOfDay.now(),
+    initialDate: now,
+    firstDate: now,
+    lastDate: DateTime(now.year + 5),
   );
   if (picked != null) {
     setPickedDate(picked);

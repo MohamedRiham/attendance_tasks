@@ -23,3 +23,21 @@ attendance/
 models/ # Data models (e.g., AttendanceRecord)
 providers/ # ViewModels / State logic (e.g., AttendanceProvider)
 screens/ # UI components for attendance (e.g., AttendanceScreen)
+
+---
+
+## How to Run
+
+### Android
+
+You have **two options**:
+
+1. **Install the provided APK**
+2. **Run from source*
+Clone this repo below
+   https://github.com/MohamedRiham/attendance_tasks
+   Get dependencies
+   Run the app
+
+### Web
+use the URL below

@@ -1,1 +1,36 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"attendance-tasks","appId":"1:960227482973:android:2ce63b39036d4aef339cb4","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"attendance-tasks","configurations":{"android":"1:960227482973:android:2ce63b39036d4aef339cb4","web":"1:960227482973:web:6908d2441f1b58d5339cb4"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "attendance-tasks",
+          "appId": "1:960227482973:android:2ce63b39036d4aef339cb4",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "attendance-tasks",
+          "configurations": {
+            "android": "1:960227482973:android:2ce63b39036d4aef339cb4",
+            "web": "1:960227482973:web:6908d2441f1b58d5339cb4"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
