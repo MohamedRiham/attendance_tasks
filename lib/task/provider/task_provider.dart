@@ -17,9 +17,7 @@ class TaskProvider with ChangeNotifier {
       await database?.add(boxName: 'task_box', value: task);
       tasks.add(task);
       notifyListeners();
-    } catch (e, stackTrace) {
-      print('error: $e');
-      print('stacktrace: $stackTrace');
+    } catch (_) {
       throw Exception('An error occurred');
     }
   }
@@ -28,7 +26,7 @@ class TaskProvider with ChangeNotifier {
     try {
       tasks = database?.values<Task>('task_box') ?? [];
       notifyListeners();
-    } catch (e) {
+    } catch (_) {
       throw Exception('Failed to load tasks');
     }
   }
@@ -40,7 +38,7 @@ class TaskProvider with ChangeNotifier {
 
       await database?.update(boxName: 'task_box', value: task);
       notifyListeners();
-    } catch (e) {
+    } catch (_) {
       throw Exception('An error occurred');
     }
   }

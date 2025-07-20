@@ -4,6 +4,7 @@ import 'package:attendance_tasks/main.dart';
 Future<void> selectDate(Function(DateTime) setPickedDate) async {
   final now = DateTime.now();
   final picked = await showDatePicker(
+    barrierDismissible: false,
     context: navigatorKey.currentContext!,
     initialDate: now,
     firstDate: now,

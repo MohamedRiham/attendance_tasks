@@ -41,3 +41,22 @@ Clone this repo below
 
 ### Web
 use the URL below
+https://attendance-tasks.web.app
+
+## Packages & Tools Used
+
+### provider
+State management using MVVM architecture.
+
+### hive
+Lightweight local NoSQL DB for offline data like attendance and task records.
+
+### intl
+For date and time formatting.
+
+### shared_preferences
+Store simple key-value data like user preferences.
+
+### uuid
+To generate unique IDs for attendance and task entries.
+

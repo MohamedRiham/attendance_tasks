@@ -12,12 +12,17 @@ class AttendanceProvider with ChangeNotifier {
   List<Attendance> attendanceHistory = [];
   Attendance? todayAttendance;
   String? formattedCurrentDay;
-
+  bool _isInitialized = false;
   Future<void> initDatabase() async {
+    if (_isInitialized) return;
     try {
       database = await LocalStorage.getInstance();
-      Hive.registerAdapter(AttendanceAdapter());
-      Hive.registerAdapter(TaskAdapter());
+      if (!Hive.isAdapterRegistered(1)) {
+        Hive.registerAdapter(AttendanceAdapter());
+      }
+      if (!Hive.isAdapterRegistered(2)) {
+        Hive.registerAdapter(TaskAdapter());
+      }
       if (!Hive.isBoxOpen('attendance_box')) {
         await database.openBox<Attendance>(
           boxName: 'attendance_box',
@@ -27,22 +32,31 @@ class AttendanceProvider with ChangeNotifier {
       if (!Hive.isBoxOpen('task_box')) {
         await database.openBox<Task>(boxName: 'task_box', typeId: 2);
       }
-    } catch (e) {
+      _isInitialized = true;
+    } catch (_) {
       throw Exception('An error occurred');
     }
   }
 
   Future<void> loadName() async {
-    final prefs = await SharedPreferences.getInstance();
-    myName = prefs.getString('user_name');
-    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      myName = prefs.getString('user_name');
+      notifyListeners();
+    } catch (_) {
+      throw Exception('Failed load details.');
+    }
   }
 
   Future<void> saveUserName(String userName) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_name', userName);
-    myName = userName;
-    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_name', userName);
+      myName = userName;
+      notifyListeners();
+    } catch (_) {
+      throw Exception('Failed to save details.');
+    }
   }
 
   Future<void> loadAttendanceHistory() async {
@@ -75,7 +89,7 @@ class AttendanceProvider with ChangeNotifier {
         }
       }
       notifyListeners();
-    } catch (e) {
+    } catch (_) {
       throw Exception('Failed to load attendance history');
     }
   }
@@ -121,7 +135,7 @@ class AttendanceProvider with ChangeNotifier {
         _formatDateAndTime();
         notifyListeners();
       }
-    } catch (e) {
+    } catch (_) {
       throw Exception('An error occurred');
     }
 
@@ -163,7 +177,7 @@ class AttendanceProvider with ChangeNotifier {
           notifyListeners();
         }
       }
-    } catch (e) {
+    } catch (_) {
       throw Exception('An error occurred');
     }
 
@@ -214,7 +228,7 @@ class AttendanceProvider with ChangeNotifier {
       final minutes = (diff.inMinutes % 60).toString().padLeft(2, '0');
       todayAttendance?.timeSpent = '$hours Hours and $minutes Minutes';
       await database.update(boxName: 'attendance_box', value: todayAttendance!);
-    } catch (e) {
+    } catch (_) {
       return;
     }
   }
@@ -237,7 +251,7 @@ class AttendanceProvider with ChangeNotifier {
       attendanceHistory.add(todayAttendance!);
 
       notifyListeners();
-    } catch (e) {
+    } catch (_) {
       throw Exception('Failed to mark attendance as leave.');
     }
   }
